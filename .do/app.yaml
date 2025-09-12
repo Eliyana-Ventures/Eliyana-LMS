@@ -1,5 +1,6 @@
 spec:
   name: eliyana-lms
+  region: fra
   services:
     - name: lms
       image:
@@ -7,3 +8,65 @@ spec:
         repository: yourdockerhubuser/frappe-lms-custom
         tag: latest
       http_port: 8080
+      instance_size_slug: basic-xxs
+      instance_count: 1
+      routes:
+        - path: /
+      envs:
+        # App Platform injects PORT; keep explicit for clarity
+        - key: PORT
+          value: "8080"
+          scope: RUN_AND_BUILD_TIME
+
+        # Site identity + admin bootstrap
+        - key: SITE_NAME
+          value: site1.local
+        - key: ADMIN_PASSWORD
+          value: ${ADMIN_PASSWORD}
+          type: SECRET
+
+        # --- Database (DO Managed MySQL) ---
+        - key: DB_HOST
+          value: your-mysql-host.b.db.ondigitalocean.com
+        - key: DB_PORT
+          value: "25060"
+        - key: DB_NAME
+          value: eliyana_lms
+        - key: DB_USER
+          value: doadmin
+        - key: DB_PASSWORD
+          value: ${DB_PASSWORD}
+          type: SECRET
+
+        # --- Stable encryption key (keep this constant across deploys) ---
+        - key: ENCRYPTION_KEY
+          value: ${ENCRYPTION_KEY}
+          type: SECRET
+
+        # (Optional) Provide a full prebuilt site_config as base64 to override all above
+        # - key: SITE_CONFIG_JSON_BASE64
+        #   value: ${SITE_CONFIG_JSON_BASE64}
+        #   type: SECRET
+
+        # --- Valkey / Redis (separate logical DBs to avoid collisions) ---
+        - key: REDIS_URL
+          value: redis://default:${VALKEY_PASSWORD}@your-valkey-host:port
+          type: SECRET
+        - key: REDIS_DB_CACHE
+          value: "1"
+        - key: REDIS_DB_QUEUE
+          value: "2"
+        - key: REDIS_DB_SOCKETIO
+          value: "3"
+
+        # --- Spaces (S3-compatible) for uploads & assets persistence ---
+        - key: S3_ENDPOINT
+          value: https://nyc3.digitaloceanspaces.com
+        - key: S3_BUCKET
+          value: eliyana-lms
+        - key: AWS_ACCESS_KEY_ID
+          value: ${SPACES_KEY}
+          type: SECRET
+        - key: AWS_SECRET_ACCESS_KEY
+          value: ${SPACES_SECRET}
+          type: SECRET
