@@ -17,6 +17,7 @@ jobs:
           password: ${{ secrets.DOCKERHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
+          context: .
           push: true
           platforms: linux/amd64
-          tags: yourdockerhubuser/frappe-lms-custom:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/frappe-lms-custom:latest
