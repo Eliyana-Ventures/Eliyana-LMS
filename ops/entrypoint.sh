@@ -83,4 +83,5 @@ else
 fi
 
 # --- 4) Start all processes via supervisor (web uses gunicorn on $PORT) ---
+export GUNICORN_WORKERS="${GUNICORN_WORKERS:-2}"
 exec /usr/bin/supervisord -n -c /etc/supervisor/conf.d/supervisord.conf

@@ -1,8 +1,9 @@
 # ---------- Frontend builder (Vue) ----------
 FROM node:20-bullseye AS frontend-builder
 WORKDIR /src
+RUN npm install -g yarn
 COPY frontend/package*.json ./frontend/
-RUN cd frontend && npm ci
+RUN cd frontend && npm install
 COPY frontend ./frontend
 RUN cd frontend && npm run build
 
