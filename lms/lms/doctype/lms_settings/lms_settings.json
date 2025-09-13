@@ -11,7 +11,8 @@
   "persona_captured",
   "column_break_zdel",
   "allow_guest_access",
-  "enable_learning_paths",
+  "prevent_skipping_videos",
+  "column_break_bjis",
   "unsplash_access_key",
   "livecode_url",
   "section_break_szgq",
@@ -36,6 +37,7 @@
   "batches",
   "certified_participants",
   "certified_members",
+  "programming_exercises",
   "column_break_exdz",
   "jobs",
   "statistics",
@@ -72,7 +74,6 @@
    "default": "https://livecode.dev.fossunited.org",
    "fieldname": "livecode_url",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "LiveCode URL"
   },
   {
@@ -338,12 +339,6 @@
    "label": "Payments app is not installed"
   },
   {
-   "default": "0",
-   "fieldname": "enable_learning_paths",
-   "fieldtype": "Check",
-   "label": "Enable Learning Paths"
-  },
-  {
    "fieldname": "general_tab",
    "fieldtype": "Tab Break",
    "label": "General"
@@ -405,13 +400,29 @@
    "fieldname": "certified_members",
    "fieldtype": "Check",
    "label": "Certified Members"
+  },
+  {
+   "default": "0",
+   "fieldname": "prevent_skipping_videos",
+   "fieldtype": "Check",
+   "label": "Prevent Skipping Videos"
+  },
+  {
+   "fieldname": "column_break_bjis",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "programming_exercises",
+   "fieldtype": "Check",
+   "label": "Programming Exercises"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-05-30 19:02:51.381668",
+ "modified": "2025-08-12 16:47:49.983018",
  "modified_by": "sayali@frappe.io",
  "module": "LMS",
  "name": "LMS Settings",

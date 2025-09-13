@@ -12,6 +12,11 @@
 						</template>
 					</Button>
 				</Tooltip>
+				<Button v-if="canSeeStats()" @click="showVideoStats()">
+					<template #icon>
+						<TrendingUp class="size-4 stroke-1.5" />
+					</template>
+				</Button>
 				<CertificationLinks :courseName="courseName" />
 			</div>
 		</header>
@@ -63,55 +68,48 @@
 				}"
 			>
 				<div
-					class="border-r container pt-5 pb-10 px-5 h-full"
+					class="border-r pt-5 pb-10 h-full"
 					:class="{
 						'w-full md:w-3/5 mx-auto border-none !pt-10': zenModeEnabled,
 					}"
 				>
-					<div
-						class="flex flex-col md:flex-row md:items-center justify-between"
-					>
-						<div class="flex flex-col">
-							<div class="text-3xl font-semibold text-ink-gray-9">
-								{{ lesson.data.title }}
-							</div>
+					<div class="px-5">
+						<div
+							class="flex flex-col space-y-3 md:space-y-0 md:flex-row md:items-center justify-between"
+						>
+							<div class="flex flex-col">
+								<div class="text-3xl font-semibold text-ink-gray-9">
+									{{ lesson.data.title }}
+								</div>
 
-							<div
-								v-if="zenModeEnabled"
-								class="relative flex items-center space-x-2 text-sm mt-1 text-ink-gray-7 group w-fit mt-2"
-							>
-								<span>
-									{{ lesson.data.chapter_title }} -
-									{{ lesson.data.course_title }}
-								</span>
-								<Info class="size-3" />
 								<div
-									class="hidden group-hover:block rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-xl absolute left-0 top-full mt-2"
+									v-if="zenModeEnabled"
+									class="relative flex items-center space-x-2 text-sm mt-1 text-ink-gray-7 group w-fit mt-2"
 								>
-									{{ Math.ceil(lesson.data.membership.progress) }}%
-									{{ __('completed') }}
+									<span>
+										{{ lesson.data.chapter_title }} -
+										{{ lesson.data.course_title }}
+									</span>
+									<Info class="size-3" />
+									<div
+										class="hidden group-hover:block rounded bg-gray-900 px-2 py-1 text-xs text-white shadow-xl absolute left-0 top-full mt-2"
+									>
+										{{ Math.ceil(lesson.data.membership.progress) }}%
+										{{ __('completed') }}
+									</div>
 								</div>
 							</div>
-						</div>
 
-						<div class="flex items-center space-x-2 mt-2 md:mt-0">
-							<Button v-if="zenModeEnabled" @click="showDiscussionsInZenMode()">
-								<template #icon>
-									<MessageCircleQuestion class="w-4 h-4 stroke-1.5" />
-								</template>
-							</Button>
-							<router-link
-								v-if="lesson.data.prev"
-								:to="{
-									name: 'Lesson',
-									params: {
-										courseName: courseName,
-										chapterNumber: lesson.data.prev.split('.')[0],
-										lessonNumber: lesson.data.prev.split('.')[1],
-									},
-								}"
-							>
-								<Button>
+							<div class="flex items-center space-x-2 mt-2 md:mt-0">
+								<Button
+									v-if="zenModeEnabled"
+									@click="showDiscussionsInZenMode()"
+								>
+									<template #icon>
+										<MessageCircleQuestion class="w-4 h-4 stroke-1.5" />
+									</template>
+								</Button>
+								<Button v-if="lesson.data.prev" @click="switchLesson('prev')">
 									<template #prefix>
 										<ChevronLeft class="w-4 h-4 stroke-1" />
 									</template>
@@ -119,34 +117,24 @@
 										{{ __('Previous') }}
 									</span>
 								</Button>
-							</router-link>
-							<router-link
-								v-if="allowEdit()"
-								:to="{
-									name: 'LessonForm',
-									params: {
-										courseName: courseName,
-										chapterNumber: props.chapterNumber,
-										lessonNumber: props.lessonNumber,
-									},
-								}"
-							>
-								<Button>
-									{{ __('Edit') }}
-								</Button>
-							</router-link>
-							<router-link
-								v-if="lesson.data.next"
-								:to="{
-									name: 'Lesson',
-									params: {
-										courseName: courseName,
-										chapterNumber: lesson.data.next.split('.')[0],
-										lessonNumber: lesson.data.next.split('.')[1],
-									},
-								}"
-							>
-								<Button>
+
+								<router-link
+									v-if="allowEdit()"
+									:to="{
+										name: 'LessonForm',
+										params: {
+											courseName: courseName,
+											chapterNumber: props.chapterNumber,
+											lessonNumber: props.lessonNumber,
+										},
+									}"
+								>
+									<Button>
+										{{ __('Edit') }}
+									</Button>
+								</router-link>
+
+								<Button v-if="lesson.data.next" @click="switchLesson('next')">
 									<template #suffix>
 										<ChevronRight class="w-4 h-4 stroke-1" />
 									</template>
@@ -154,85 +142,107 @@
 										{{ __('Next') }}
 									</span>
 								</Button>
-							</router-link>
-							<router-link
-								v-else
-								:to="{
-									name: 'CourseDetail',
-									params: { courseName: courseName },
+
+								<router-link
+									v-else
+									:to="{
+										name: 'CourseDetail',
+										params: { courseName: courseName },
+									}"
+								>
+									<Button>
+										{{ __('Back to Course') }}
+									</Button>
+								</router-link>
+							</div>
+						</div>
+
+						<div v-if="!zenModeEnabled" class="flex items-center mt-4 md:mt-2">
+							<span
+								class="h-6 mr-1"
+								:class="{
+									'avatar-group overlap': lesson.data.instructors?.length > 1,
 								}"
 							>
-								<Button>
-									{{ __('Back to Course') }}
-								</Button>
-							</router-link>
-						</div>
-					</div>
-
-					<div v-if="!zenModeEnabled" class="flex items-center mt-2">
-						<span
-							class="h-6 mr-1"
-							:class="{
-								'avatar-group overlap': lesson.data.instructors?.length > 1,
-							}"
-						>
-							<UserAvatar
-								v-for="instructor in lesson.data.instructors"
-								:user="instructor"
+								<UserAvatar
+									v-for="instructor in lesson.data.instructors"
+									:user="instructor"
+								/>
+							</span>
+							<CourseInstructors
+								v-if="lesson.data?.instructors"
+								:instructors="lesson.data.instructors"
 							/>
-						</span>
-						<CourseInstructors
-							v-if="lesson.data?.instructors"
-							:instructors="lesson.data.instructors"
-						/>
-					</div>
+						</div>
 
-					<div
-						v-if="
-							lesson.data.instructor_content &&
-							JSON.parse(lesson.data.instructor_content)?.blocks?.length > 1 &&
-							allowInstructorContent()
-						"
-						class="bg-surface-gray-2 p-3 rounded-md mt-6"
-					>
-						<div class="text-ink-gray-5 font-medium">
-							{{ __('Instructor Notes') }}
+						<div
+							v-if="
+								lesson.data.instructor_content &&
+								JSON.parse(lesson.data.instructor_content)?.blocks?.length >
+									1 &&
+								allowInstructorContent()
+							"
+							class="bg-surface-gray-2 p-3 rounded-md mt-6"
+						>
+							<div class="text-ink-gray-5 font-medium">
+								{{ __('Instructor Notes') }}
+							</div>
+							<div
+								id="instructor-content"
+								class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal"
+							></div>
 						</div>
 						<div
-							id="instructor-content"
-							class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal"
-						></div>
+							v-else-if="lesson.data.instructor_notes"
+							class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal mt-8"
+						>
+							<LessonContent :content="lesson.data.instructor_notes" />
+						</div>
+						<div
+							v-if="lesson.data.content"
+							@mouseup="toggleInlineMenu"
+							class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal mt-8"
+						>
+							<div id="editor"></div>
+						</div>
+						<div
+							v-else
+							class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal mt-8"
+						>
+							<LessonContent
+								v-if="lesson.data?.body"
+								:content="lesson.data.body"
+								:youtube="lesson.data.youtube"
+								:quizId="lesson.data.quiz_id"
+							/>
+						</div>
 					</div>
 					<div
-						v-else-if="lesson.data.instructor_notes"
-						class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal mt-8"
+						v-if="lesson.data"
+						class="mt-10 pb-20 pt-5 border-t px-5"
+						ref="discussionsContainer"
 					>
-						<LessonContent :content="lesson.data.instructor_notes" />
-					</div>
-					<div
-						v-if="lesson.data.content"
-						class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal mt-8"
-					>
-						<div id="editor"></div>
-					</div>
-					<div
-						v-else
-						class="ProseMirror prose prose-table:table-fixed prose-td:p-2 prose-th:p-2 prose-td:border prose-th:border prose-td:border-outline-gray-2 prose-th:border-outline-gray-2 prose-td:relative prose-th:relative prose-th:bg-surface-gray-2 prose-sm max-w-none !whitespace-normal mt-8"
-					>
-						<LessonContent
-							v-if="lesson.data?.body"
-							:content="lesson.data.body"
-							:youtube="lesson.data.youtube"
-							:quizId="lesson.data.quiz_id"
+						<TabButtons
+							v-if="tabs.length > 1"
+							:buttons="tabs"
+							v-model="currentTab"
+							class="w-fit mb-10"
 						/>
-					</div>
-					<div class="mt-20" ref="discussionsContainer">
+						<Notes
+							v-if="currentTab === 'Notes'"
+							:lesson="lesson.data?.name"
+							v-model:notes="notes"
+							@updateNotes="updateNotes"
+						/>
 						<Discussions
-							v-if="allowDiscussions"
+							v-else-if="allowDiscussions"
 							:title="'Questions'"
 							:doctype="'Course Lesson'"
 							:docname="lesson.data.name"
 							:key="lesson.data.name"
+							:emptyStateText="
+								__('Ask a question to get help from the community.')
+							"
 						/>
 					</div>
 				</div>
@@ -258,17 +268,33 @@
 					:courseName="courseName"
 					:key="chapterNumber"
 					:getProgress="lesson.data.membership ? true : false"
+					:lessonProgress="lessonProgress"
 				/>
 			</div>
 		</div>
 	</div>
+	<InlineLessonMenu
+		v-if="lesson.data"
+		v-model="showInlineMenu"
+		:lesson="lesson.data?.name"
+		v-model:notes="notes"
+		@updateNotes="updateNotes"
+	/>
+	<VideoStatistics
+		v-model="showStatsDialog"
+		:lessonName="lesson.data?.name"
+		:lessonTitle="lesson.data?.title"
+	/>
 </template>
 <script setup>
 import {
-	createResource,
 	Badge,
 	Breadcrumbs,
 	Button,
+	call,
+	createListResource,
+	createResource,
+	TabButtons,
 	Tooltip,
 	usePageMeta,
 } from 'frappe-ui'
@@ -281,8 +307,6 @@ import {
 	onBeforeUnmount,
 	nextTick,
 } from 'vue'
-import CourseOutline from '@/components/CourseOutline.vue'
-import UserAvatar from '@/components/UserAvatar.vue'
 import { useRouter, useRoute } from 'vue-router'
 import {
 	ChevronLeft,
@@ -292,16 +316,22 @@ import {
 	Focus,
 	Info,
 	MessageCircleQuestion,
+	TrendingUp,
 } from 'lucide-vue-next'
-import Discussions from '@/components/Discussions.vue'
-import { getEditorTools, enablePlyr } from '@/utils'
+import { getEditorTools, enablePlyr, highlightText } from '@/utils'
 import { sessionStore } from '@/stores/session'
 import { useSidebar } from '@/stores/sidebar'
 import EditorJS from '@editorjs/editorjs'
 import LessonContent from '@/components/LessonContent.vue'
 import CourseInstructors from '@/components/CourseInstructors.vue'
 import ProgressBar from '@/components/ProgressBar.vue'
+import Discussions from '@/components/Discussions.vue'
 import CertificationLinks from '@/components/CertificationLinks.vue'
+import VideoStatistics from '@/components/Modals/VideoStatistics.vue'
+import CourseOutline from '@/components/CourseOutline.vue'
+import UserAvatar from '@/components/UserAvatar.vue'
+import Notes from '@/components/Notes/Notes.vue'
+import InlineLessonMenu from '@/components/Notes/InlineLessonMenu.vue'
 
 const user = inject('$user')
 const socket = inject('$socket')
@@ -313,12 +343,23 @@ const instructorEditor = ref(null)
 const lessonProgress = ref(0)
 const lessonContainer = ref(null)
 const zenModeEnabled = ref(false)
+const showStatsDialog = ref(false)
 const hasQuiz = ref(false)
 const discussionsContainer = ref(null)
 const timer = ref(0)
 const { brand } = sessionStore()
 const sidebarStore = useSidebar()
+const plyrSources = ref([])
+const showInlineMenu = ref(false)
+const currentTab = ref('Notes')
 let timerInterval
+
+const tabs = ref([
+	{
+		label: __('Notes'),
+		value: 'Notes',
+	},
+])
 
 const props = defineProps({
 	courseName: {
@@ -337,7 +378,6 @@ const props = defineProps({
 
 onMounted(() => {
 	startTimer()
-	console.log(sidebarStore.isSidebarCollapsed)
 	sidebarStore.isSidebarCollapsed = true
 	document.addEventListener('fullscreenchange', attachFullscreenEvent)
 	socket.on('update_lesson_progress', (data) => {
@@ -362,6 +402,7 @@ const attachFullscreenEvent = () => {
 onBeforeUnmount(() => {
 	document.removeEventListener('fullscreenchange', attachFullscreenEvent)
 	sidebarStore.isSidebarCollapsed = false
+	trackVideoWatchDuration()
 })
 
 const lesson = createResource({
@@ -384,6 +425,15 @@ const setupLesson = (data) => {
 		})
 		return
 	}
+	if (data.is_scorm_package) {
+		router.push({
+			name: 'SCORMChapter',
+			params: {
+				courseName: props.courseName,
+				chapterName: data.chapter_name,
+			},
+		})
+	}
 	lessonProgress.value = data.membership?.progress
 	if (data.content) editor.value = renderEditor('editor', data.content)
 	if (
@@ -397,16 +447,22 @@ const setupLesson = (data) => {
 	editor.value?.isReady.then(() => {
 		checkIfDiscussionsAllowed()
 	})
+	checkQuiz()
+}
 
-	if (!editor.value && data.body) {
+const checkQuiz = () => {
+	if (!editor.value && lesson.body) {
 		const quizRegex = /\{\{ Quiz\(".*"\) \}\}/
-		hasQuiz.value = quizRegex.test(data.body)
-		if (!hasQuiz.value && !zenModeEnabled) allowDiscussions.value = true
+		hasQuiz.value = quizRegex.test(lesson.body)
+		if (!hasQuiz.value && !zenModeEnabled) {
+			allowDiscussions.value = true
+		} else {
+			allowDiscussions.value = false
+		}
 	}
 }
 
 const renderEditor = (holder, content) => {
-	// empty the holder
 	if (document.getElementById(holder))
 		document.getElementById(holder).innerHTML = ''
 	return new EditorJS({
@@ -414,7 +470,7 @@ const renderEditor = (holder, content) => {
 		tools: getEditorTools(),
 		data: JSON.parse(content),
 		readOnly: true,
-		defaultBlock: 'embed', // editor adds an empty block at the top, so to avoid that added default block as embed
+		defaultBlock: 'embed',
 	})
 }
 
@@ -434,6 +490,23 @@ const progress = createResource({
 	},
 	onSuccess(data) {
 		lessonProgress.value = data
+	},
+})
+
+const notes = createListResource({
+	doctype: 'LMS Lesson Note',
+	filters: {
+		lesson: lesson.data?.name,
+		member: user.data?.name,
+	},
+	fields: ['name', 'color', 'highlighted_text', 'note'],
+	cache: ['notes', lesson.data?.name, user.data?.name],
+	onSuccess(data) {
+		data.forEach((note) => {
+			setTimeout(() => {
+				highlightText(note)
+			}, 500)
+		})
 	},
 })
 
@@ -457,38 +530,163 @@ const breadcrumbs = computed(() => {
 	return items
 })
 
+const switchLesson = (direction) => {
+	trackVideoWatchDuration()
+	let lessonIndex =
+		direction === 'prev'
+			? lesson.data.prev.split('.')
+			: lesson.data.next.split('.')
+
+	router.push({
+		name: 'Lesson',
+		params: {
+			courseName: props.courseName,
+			chapterNumber: lessonIndex[0],
+			lessonNumber: lessonIndex[1],
+		},
+	})
+}
+
 watch(
 	[() => route.params.chapterNumber, () => route.params.lessonNumber],
-	(
+	async (
 		[newChapterNumber, newLessonNumber],
 		[oldChapterNumber, oldLessonNumber]
 	) => {
 		if (newChapterNumber || newLessonNumber) {
-			editor.value = null
-			instructorEditor.value = null
-			allowDiscussions.value = false
-			lesson.submit({
-				chapter: newChapterNumber,
-				lesson: newLessonNumber,
-			})
-			clearInterval(timerInterval)
-			timer.value = 0
+			plyrSources.value = []
+			await nextTick()
+			resetLessonState(newChapterNumber, newLessonNumber)
 			startTimer()
-			enablePlyr()
+			updateNotes()
+			checkIfDiscussionsAllowed()
+			checkQuiz()
 		}
 	}
 )
 
+const resetLessonState = (newChapterNumber, newLessonNumber) => {
+	editor.value = null
+	instructorEditor.value = null
+	allowDiscussions.value = false
+	lesson.submit({
+		chapter: newChapterNumber,
+		lesson: newLessonNumber,
+	})
+	clearInterval(timerInterval)
+	timer.value = 0
+}
+
+const trackVideoWatchDuration = () => {
+	if (!lesson.data.membership) return
+	let videoDetails = getVideoDetails()
+	videoDetails = videoDetails.concat(getPlyrSourceDetails())
+	call('lms.lms.api.track_video_watch_duration', {
+		lesson: lesson.data.name,
+		videos: videoDetails,
+	})
+}
+
+const getVideoDetails = () => {
+	let details = []
+	const videos = document.querySelectorAll('video')
+	if (videos.length > 0) {
+		videos.forEach((video) => {
+			if (video.currentTime == video.duration) markProgress()
+			details.push({
+				source: video.src,
+				watch_time: video.currentTime,
+			})
+		})
+	}
+	return details
+}
+
+const getPlyrSourceDetails = () => {
+	let details = []
+	plyrSources.value.forEach((source) => {
+		if (source.currentTime == source.duration) markProgress()
+		let src = cleanYouTubeUrl(source.source)
+		details.push({
+			source: src,
+			watch_time: source.currentTime,
+		})
+	})
+	return details
+}
+
+const cleanYouTubeUrl = (url) => {
+	if (!url) return url
+	const urlObj = new URL(url)
+	urlObj.searchParams.delete('t')
+	return urlObj.toString()
+}
+
 watch(
 	() => lesson.data,
-	(data) => {
+	async (data) => {
 		setupLesson(data)
-		enablePlyr()
+		getPlyrSource()
+		updateNotes()
+		if (data.icon == 'icon-youtube') clearInterval(timerInterval)
 	}
 )
 
+const getPlyrSource = async () => {
+	await nextTick()
+	if (plyrSources.value.length == 0) {
+		plyrSources.value = await enablePlyr()
+	}
+	updateVideoWatchDuration()
+}
+
+const updateVideoWatchDuration = () => {
+	if (lesson.data.videos && lesson.data.videos.length > 0) {
+		lesson.data.videos.forEach((video) => {
+			if (video.source.includes('youtube') || video.source.includes('vimeo')) {
+				updatePlyrVideoTime(video)
+			} else {
+				updateVideoTime(video)
+			}
+		})
+	}
+}
+
+const updatePlyrVideoTime = (video) => {
+	plyrSources.value.forEach((plyrSource) => {
+		let lastWatchedTime = 0
+		let isSeeking = false
+
+		plyrSource.on('ready', () => {
+			if (plyrSource.source === video.source) {
+				plyrSource.embed.seekTo(video.watch_time, true)
+				plyrSource.play()
+				plyrSource.pause()
+			}
+		})
+	})
+}
+
+const updateVideoTime = (video) => {
+	const videos = document.querySelectorAll('video')
+	if (videos.length > 0) {
+		videos.forEach((vid) => {
+			if (vid.src === video.source) {
+				let watch_time = video.watch_time < vid.duration ? video.watch_time : 0
+				if (vid.readyState >= 1) {
+					vid.currentTime = watch_time
+				} else {
+					vid.addEventListener('loadedmetadata', () => {
+						vid.currentTime = watch_time
+					})
+				}
+			}
+		})
+	}
+}
+
 const startTimer = () => {
-	timerInterval = setInterval(() => {
+	let timerInterval = setInterval(() => {
 		timer.value++
 		if (timer.value == 30) {
 			clearInterval(timerInterval)
@@ -502,8 +700,11 @@ onBeforeUnmount(() => {
 })
 
 const checkIfDiscussionsAllowed = () => {
+	hasQuiz.value = false
 	JSON.parse(lesson.data?.content)?.blocks?.forEach((block) => {
-		if (block.type === 'quiz') hasQuiz.value = true
+		if (block.type === 'quiz') {
+			hasQuiz.value = true
+		}
 	})
 
 	if (
@@ -512,8 +713,11 @@ const checkIfDiscussionsAllowed = () => {
 		(lesson.data?.membership ||
 			user.data?.is_moderator ||
 			user.data?.is_instructor)
-	)
+	) {
 		allowDiscussions.value = true
+	} else {
+		allowDiscussions.value = false
+	}
 }
 
 const allowEdit = () => {
@@ -553,6 +757,24 @@ const enrollStudent = () => {
 	)
 }
 
+const toggleInlineMenu = async () => {
+	showInlineMenu.value = false
+	await nextTick()
+	let selection = window.getSelection()
+	if (selection.toString()) {
+		showInlineMenu.value = true
+	}
+}
+
+const canSeeStats = () => {
+	if (user.data?.is_moderator || user.data?.is_instructor) return true
+	return false
+}
+
+const showVideoStats = () => {
+	showStatsDialog.value = true
+}
+
 const canGoZen = () => {
 	if (
 		user.data?.is_moderator ||
@@ -581,6 +803,7 @@ const showDiscussionsInZenMode = () => {
 		allowDiscussions.value = false
 	} else {
 		allowDiscussions.value = true
+		currentTab.value = 'Community'
 		scrollDiscussionsIntoView()
 	}
 }
@@ -594,6 +817,38 @@ const scrollDiscussionsIntoView = () => {
 		})
 	})
 }
+
+const updateNotes = () => {
+	notes.update({
+		filters: {
+			lesson: lesson.data?.name,
+			member: user.data?.name,
+		},
+	})
+	notes.reload()
+}
+
+watch(allowDiscussions, () => {
+	if (allowDiscussions.value) {
+		tabs.value = [
+			{
+				label: __('Notes'),
+				value: 'Notes',
+			},
+			{
+				label: __('Community'),
+				value: 'Community',
+			},
+		]
+	} else {
+		tabs.value = [
+			{
+				label: __('Notes'),
+				value: 'Notes',
+			},
+		]
+	}
+})
 
 const redirectToLogin = () => {
 	window.location.href = `/login?redirect-to=/lms/courses/${props.courseName}`

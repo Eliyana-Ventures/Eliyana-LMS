@@ -196,7 +196,7 @@ import { usersStore } from '@/stores/user'
 import { sessionStore } from '@/stores/session'
 import { useSidebar } from '@/stores/sidebar'
 import { useSettings } from '@/stores/settings'
-import { Button, createResource, Tooltip } from 'frappe-ui'
+import { Button, call, createResource, Tooltip } from 'frappe-ui'
 import PageModal from '@/components/Modals/PageModal.vue'
 import { capture } from '@/telemetry'
 import LMSLogo from '@/components/Icons/LMSLogo.vue'
@@ -214,6 +214,7 @@ import {
 	Users,
 	BookText,
 	Zap,
+	Check,
 } from 'lucide-vue-next'
 import {
 	TrialBanner,
@@ -225,7 +226,7 @@ import {
 	IntermediateStepModal,
 } from 'frappe-ui/frappe'
 
-const { user, sidebarSettings } = sessionStore()
+const { user } = sessionStore()
 const { userResource } = usersStore()
 let sidebarStore = useSidebar()
 const socket = inject('$socket')
@@ -236,6 +237,7 @@ const isModerator = ref(false)
 const isInstructor = ref(false)
 const pageToEdit = ref(null)
 const settingsStore = useSettings()
+const { sidebarSettings } = settingsStore
 const showOnboarding = ref(false)
 const showIntermediateModal = ref(false)
 const currentStep = ref({})
@@ -343,35 +345,51 @@ const addAssignments = () => {
 	}
 }
 
-const addPrograms = () => {
-	let activeFor = ['Programs', 'ProgramForm']
-	let index = 1
-	let canAddProgram = false
-
-	if (
-		!isInstructor.value &&
-		!isModerator.value &&
-		settingsStore.learningPaths.data
-	) {
-		sidebarLinks.value = sidebarLinks.value.filter(
-			(link) => link.label !== 'Courses'
-		)
-		activeFor.push('CourseDetail')
-		activeFor.push('Lesson')
-		index = 0
-		canAddProgram = true
-	} else if (isInstructor.value || isModerator.value) {
-		canAddProgram = true
-	}
-
-	if (canAddProgram) {
-		sidebarLinks.value.splice(index, 0, {
-			label: 'Programs',
-			icon: 'Route',
-			to: 'Programs',
-			activeFor: activeFor,
+const addProgrammingExercises = () => {
+	if (isInstructor.value || isModerator.value) {
+		sidebarLinks.value.splice(3, 0, {
+			label: 'Programming Exercises',
+			icon: 'Code',
+			to: 'ProgrammingExercises',
+			activeFor: [
+				'ProgrammingExercises',
+				'ProgrammingExerciseForm',
+				'ProgrammingExerciseSubmissions',
+				'ProgrammingExerciseSubmission',
+			],
 		})
 	}
+}
+
+const addPrograms = async () => {
+	let canAddProgram = await checkIfCanAddProgram()
+	if (!canAddProgram) return
+	let activeFor = ['Programs', 'ProgramDetail']
+	let index = 2
+
+	sidebarLinks.value.splice(index, 0, {
+		label: 'Programs',
+		icon: 'Route',
+		to: 'Programs',
+		activeFor: activeFor,
+	})
+}
+
+const checkIfCanAddProgram = async () => {
+	if (isModerator.value || isInstructor.value) {
+		return true
+	}
+	const programs = await call('lms.lms.utils.get_programs')
+	return programs.enrolled.length > 0 || programs.published.length > 0
+}
+
+const addHome = () => {
+	sidebarLinks.value.unshift({
+		label: 'Home',
+		icon: 'Home',
+		to: 'Home',
+		activeFor: ['Home'],
+	})
 }
 
 const openPageModal = (link) => {
@@ -625,7 +643,9 @@ watch(userResource, () => {
 	if (userResource.data) {
 		isModerator.value = userResource.data.is_moderator
 		isInstructor.value = userResource.data.is_instructor
+		addHome()
 		addPrograms()
+		addProgrammingExercises()
 		addQuizzes()
 		addAssignments()
 		setUpOnboarding()

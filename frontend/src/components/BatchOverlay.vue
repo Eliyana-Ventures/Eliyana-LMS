@@ -56,7 +56,7 @@
 		</div>
 		<div v-if="!readOnlyMode">
 			<router-link
-				v-if="isModerator || isStudent"
+				v-if="canAccessBatch"
 				:to="{
 					name: 'Batch',
 					params: {
@@ -65,8 +65,12 @@
 				}"
 			>
 				<Button variant="solid" class="w-full mt-4">
+					<template #prefix>
+						<LogIn v-if="isStudent" class="size-4 stroke-1.5" />
+						<Settings v-else class="size-4 stroke-1.5" />
+					</template>
 					<span>
-						{{ isModerator ? __('Manage Batch') : __('Visit Batch') }}
+						{{ isStudent ? __('Visit Batch') : __('Manage Batch') }}
 					</span>
 				</Button>
 			</router-link>
@@ -85,6 +89,9 @@
 				"
 			>
 				<Button v-if="!isStudent" class="w-full mt-4" variant="solid">
+					<template #prefix>
+						<CreditCard class="size-4 stroke-1.5" />
+					</template>
 					<span>
 						{{ __('Register Now') }}
 					</span>
@@ -100,6 +107,9 @@
 				"
 				@click="enrollInBatch()"
 			>
+				<template #prefix>
+					<GraduationCap class="size-4 stroke-1.5" />
+				</template>
 				{{ __('Enroll Now') }}
 			</Button>
 			<router-link
@@ -112,6 +122,9 @@
 				}"
 			>
 				<Button class="w-full mt-2">
+					<template #prefix>
+						<Pencil class="size-4 stroke-1.5" />
+					</template>
 					<span>
 						{{ __('Edit') }}
 					</span>
@@ -122,8 +135,17 @@
 </template>
 <script setup>
 import { inject, computed } from 'vue'
-import { Badge, Button, createResource, toast } from 'frappe-ui'
-import { BookOpen, Clock, Globe } from 'lucide-vue-next'
+import { Button, createResource, toast } from 'frappe-ui'
+import {
+	BookOpen,
+	Clock,
+	CreditCard,
+	Globe,
+	GraduationCap,
+	LogIn,
+	Pencil,
+	Settings,
+} from 'lucide-vue-next'
 import { formatNumberIntoCurrency, formatTime } from '@/utils'
 import DateRange from '@/components/Common/DateRange.vue'
 import { useRouter } from 'vue-router'
@@ -181,5 +203,13 @@ const isStudent = computed(() => {
 
 const isModerator = computed(() => {
 	return user.data?.is_moderator
+})
+
+const isEvaluator = computed(() => {
+	return user.data?.is_evaluator
+})
+
+const canAccessBatch = computed(() => {
+	return isModerator.value || isStudent.value || isEvaluator.value
 })
 </script>

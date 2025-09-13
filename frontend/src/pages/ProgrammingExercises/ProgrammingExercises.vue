@@ -29,7 +29,7 @@
 				<template #prefix>
 					<Plus class="h-4 w-4 stroke-1.5" />
 				</template>
-				{{ __('New') }}
+				{{ __('Create') }}
 			</Button>
 		</div>
 	</header>
@@ -150,6 +150,7 @@ const exercises = createListResource({
 	cache: ['programmingExercises'],
 	fields: ['name', 'title', 'language', 'problem_statement'],
 	auto: true,
+	orderBy: 'modified desc',
 })
 
 usePageMeta(() => {
