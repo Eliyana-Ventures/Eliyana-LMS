@@ -123,6 +123,6 @@ Eliyana Ventures is launching “Eliyana Academy,” an Africa-first learning pl
 6. **Scale & Self-Hosting Prep (Month 6–12):** Optimize costs, expand localization, ready AWS/DigitalOcean deployment option.
 
 ## 10. Appendices
-* **Reference SRS:** See `docs/SRS.md` (to be maintained) for technical specifications backing these requirements.
+* **Reference SRS:** See `docs/SRS.md` for the authoritative technical specifications backing these requirements.
 * **Glossary:** Quick Win, Copilot interaction, RAG (Retrieval-Augmented Generation), Zero-rated delivery.
 * **Revision Plan:** Update BRD quarterly or when major feature pivots occur; maintain traceability to SRS, design documents, and implementation tickets.
